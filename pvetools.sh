@@ -232,6 +232,7 @@ backup_files() {
 
 update_sources_list() {
     local mirror="$1"
+    cat /dev/null > /etc/apt/sources.list
     if [ "$currentDebianVersion" -gt 11 ]; then
         cat > /etc/apt/sources.list << EOF
 deb https://mirrors.$mirror/debian/ $sver main contrib non-free non-free-firmware

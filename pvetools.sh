@@ -123,8 +123,8 @@ fi
 # debian 11 change security source rule
 if [ $currentDebianVersion -gt 10 ];then
     securitySource="
-deb https://mirrors.ustc.edu.cn/debian-security/ stable-security main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian-security/ stable-security main contrib non-free
+deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
+deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
 "
 else
     securitySource="

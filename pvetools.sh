@@ -83,218 +83,197 @@ fi
 chSource(){
 clear
 if [ $1 ];then
-    #x=a
-    whiptail --title "Warnning" --msgbox "Not supported!
-    不支持该模式。" 10 60
+    whiptail --title "Warnning" --msgbox "Not supported! 不支持该模式。" 10 60
     chSource
+    return
 fi
-sver=`cat /etc/debian_version |awk -F"." '{print $1}'`
-currentDebianVersion=${sver}
+
+sver=$(cat /etc/debian_version | awk -F"." '{print $1}')
+currentDebianVersion=$sver
+
 case "$sver" in
-    12 )
-        sver="bookworm"
-        ;;
-    11 )
-        sver="bullseye"
-        ;;
-    10 )
-        sver="buster"
-        ;;
-    9 )
-        sver="stretch"
-        ;;
-    8 )
-        sver="jessie"
-        ;;
-    7 )
-        sver="wheezy"
-        ;;
-    6 )
-        sver="squeeze"
-        ;;
-    * )
-        sver=""
+    12) sver="bookworm" ;;
+    11) sver="bullseye" ;;
+    10) sver="buster" ;;
+    9) sver="stretch" ;;
+    8) sver="jessie" ;;
+    7) sver="wheezy" ;;
+    6) sver="squeeze" ;;
+    *) sver="" ;;
 esac
-if [ ! $sver ];then
-    whiptail --title "Warnning" --msgbox "Not supported!
-    您的版本不支持！无法继续。" 10 60
+
+if [ -z "$sver" ]; then
+    whiptail --title "Warnning" --msgbox "Not supported! 您的版本不支持！无法继续。" 10 60
     main
+    return
 fi
-# debian 11 change security source rule
-if [ $currentDebianVersion -gt 10 ];then
-    securitySource="
-deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
-#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
-"
+
+if [ $currentDebianVersion -gt 11 ]; then
+    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free non-free-firmware\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free non-free-firmware'
+elif [ $currentDebianVersion -gt 10 ]; then
+    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free'
 else
-    securitySource="
-deb https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free
-#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free
-"
+    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free'
 fi
-    #"a" "Automation mode." \
-    #"a" "无脑模式" \
-if [ $L = "en" ];then
-    OPTION=$(whiptail --title " PveTools   Version : 2.4.0 " --menu "Config apt source:" 25 60 15 \
+
+if [ "$L" = "en" ]; then
+    OPTION=$(whiptail --title "PveTools Version : 2.4.0" --menu "Config apt source:" 25 60 15 \
     "b" "Change to cn source." \
     "c" "Disable enterprise." \
     "d" "Undo Change." \
     "q" "Main menu." \
     3>&1 1>&2 2>&3)
 else
-    OPTION=$(whiptail --title " PveTools   Version : 2.4.0 " --menu "配置apt镜像源:" 25 60 15 \
+    OPTION=$(whiptail --title "PveTools Version : 2.4.0" --menu "配置apt镜像源:" 25 60 15 \
     "b" "更换为国内源" \
     "c" "关闭企业更新源" \
     "d" "还原配置" \
     "q" "返回主菜单" \
     3>&1 1>&2 2>&3)
 fi
+
 exitstatus=$?
 if [ $exitstatus = 0 ]; then
     case "$OPTION" in
-a | A )
-    if (whiptail --title "Yes/No Box" --yesno "修改为ustc.edu.cn源，禁用企业订阅更新源，添加非订阅更新源(ustc.edu.cn),修改ceph镜像更新源" 10 60) then
-        if [ `grep "ustc.edu.cn" /etc/apt/sources.list|wc -l` = 0 ];then
-            #sver=`cat /etc/apt/sources.list|awk 'NR==1{print $3}'`
-            cp /etc/apt/sources.list /etc/apt/sources.list.bak.pvetools
-            cp /etc/apt/sources.list.d/pve-no-sub.list /etc/apt/sources.list.d/pve-no-sub.list.bak.pvetools
-            cp /etc/apt/sources.list.d/pve-enterprise.list /etc/apt/sources.list.d/pve-enterprise.list.bak.pvetools
-            cp /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.bak.pvetools
-            cat > /etc/apt/sources.list <<EOF
-deb https://mirrors.ustc.edu.cn/debian/ $sver main contrib non-free
-#deb-src https://mirrors.ustc.edu.cn/debian/ $sver main contrib non-free
-deb https://mirrors.ustc.edu.cn/debian/ $sver-updates main contrib non-free
-#deb-src https://mirrors.ustc.edu.cn/debian/ $sver-updates main contrib non-free
-deb https://mirrors.ustc.edu.cn/debian/ $sver-backports main contrib non-free
-#deb-src https://mirrors.ustc.edu.cn/debian/ $sver-backports main contrib non-free
-$securitySource
-EOF
-            #修改pve 5.x更新源地址为非订阅更新源，不使用企业订阅更新源。
-            echo "deb http://mirrors.ustc.edu.cn/proxmox/debian/pve/ $sver pve-no-subscription" > /etc/apt/sources.list.d/pve-no-sub.list
-            #关闭pve 5.x企业订阅更新源
-            sed -i 's|deb|#deb|' /etc/apt/sources.list.d/pve-enterprise.list
-            #修改 ceph镜像更新源
-            echo "deb http://mirrors.ustc.edu.cn/proxmox/debian/ceph-luminous $sver main" > /etc/apt/sources.list.d/ceph.list
-
-            #针对debian 12的处理
-            if [ $bver -gt 11 ];then
-                su -c 'echo "APT::Get::Update::SourceListWarnings::NonFreeFirmware \"false\";" > /etc/apt/apt.conf.d/no-bookworm-firmware.conf'
-            fi
-
-            whiptail --title "Success" --msgbox " apt source has been changed successfully!
-            软件源已更换成功！" 10 60
-            apt-get update
-            apt-get -y install net-tools
-            whiptail --title "Success" --msgbox " apt source has been changed successfully!
-软件源已更换成功！" 10 60
-        else
-            whiptail --title "Success" --msgbox " Already changed apt source to ustc.edu.cn!
-已经更换apt源为 ustc.edu.cn" 10 60
-        fi
-        if [ ! $1 ];then
-            chSource
-        fi
-    fi
-    ;;
-	b | B  )
-        if [ $L = "en" ];then
-            OPTION=$(whiptail --title " PveTools   Version : 2.4.0 " --menu "Config apt source:" 25 60 15 \
-            "a" "aliyun.com" \
-            "b" "ustc.edu.cn" \
-            "q" "Main menu." \
-            3>&1 1>&2 2>&3)
-        else
-            OPTION=$(whiptail --title " PveTools   Version : 2.4.0 " --menu "配置apt镜像源:" 25 60 15 \
-            "a" "aliyun.com" \
-            "b" "ustc.edu.cn" \
-            "q" "返回主菜单" \
-            3>&1 1>&2 2>&3)
-        fi
-        exitstatus=$?
-        if [ $exitstatus = 0 ]; then
-            case "$OPTION" in
-                a )
-                    ss="aliyun.com"
-                    ;;
-                b)
-                    ss="ustc.edu.cn"
-                    ;;
-                q )
-                    chSource
-            esac
-            if (whiptail --title "Yes/No Box" --yesno "修改更新源为$ss?" 10 60) then
-                if [ `grep $ss /etc/apt/sources.list|wc -l` = 0 ];then
-                    cp /etc/apt/sources.list /etc/apt/sources.list.bak.pvetools
-                    #cp /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.bak.pvetools
-                    #sver=`cat /etc/apt/sources.list|awk 'NR==1{print $3}'`
-                    cat > /etc/apt/sources.list << EOF
-deb https://mirrors.$ss/debian/ $sver main contrib non-free
-#deb-src https://mirrors.$ss/debian/ $sver main contrib non-free
-deb https://mirrors.$ss/debian/ $sver-updates main contrib non-free
-#deb-src https://mirrors.$ss/debian/ $sver-updates main contrib non-free
-deb https://mirrors.$ss/debian/ $sver-backports main contrib non-free
-#deb-src https://mirrors.$ss/debian/ $sver-backports main contrib non-free
-$securitySource
-EOF
-                    #修改 ceph镜像更新源
-                    #echo "deb http://mirrors.$ss/proxmox/debian/ceph-luminous $sver main" > /etc/apt/sources.list.d/ceph.list
-                    #修改pve 更新源地址为非订阅更新源，不使用企业订阅更新源。
-                    echo "deb http://mirrors.ustc.edu.cn/proxmox/debian/pve/ $sver pve-no-subscription" > /etc/apt/sources.list.d/pve-no-sub.list
-                    whiptail --title "Success" --msgbox " apt source has been changed successfully!
-                    软件源已更换成功！" 10 60
+        a | A)
+            if (whiptail --title "Yes/No Box" --yesno "修改为ustc.edu.cn源，禁用企业订阅更新源，添加非订阅更新源(ustc.edu.cn),修改ceph镜像更新源" 10 60) then
+                if ! grep -q "ustc.edu.cn" /etc/apt/sources.list; then
+                    backup_files
+                    update_sources_list "ustc.edu.cn"
+                    update_pve_no_sub_list "ustc.edu.cn"
+                    disable_pve_enterprise_list
+                    update_ceph_list "ustc.edu.cn"
+                    handle_debian_12
+                    show_success_message
                     apt-get update
                     apt-get -y install net-tools
-                    whiptail --title "Success" --msgbox " apt source has been changed successfully!
-                    软件源已更换成功！" 10 60
+                    show_success_message
                 else
-                    whiptail --title "Success" --msgbox " Already changed apt source to $ss!
-已经更换apt源为 $ss" 10 60
+                    whiptail --title "Success" --msgbox "Already changed apt source to ustc.edu.cn! 已经更换apt源为 ustc.edu.cn" 10 60
                 fi
+                [ -z "$1" ] && chSource
+            fi
+            ;;
+        b | B)
+            if [ "$L" = "en" ]; then
+                OPTION=$(whiptail --title "PveTools Version : 2.4.0" --menu "Config apt source:" 25 60 15 \
+                "a" "aliyun.com" \
+                "b" "ustc.edu.cn" \
+                "q" "Main menu." \
+                3>&1 1>&2 2>&3)
             else
+                OPTION=$(whiptail --title "PveTools Version : 2.4.0" --menu "配置apt镜像源:" 25 60 15 \
+                "a" "aliyun.com" \
+                "b" "ustc.edu.cn" \
+                "q" "返回主菜单" \
+                3>&1 1>&2 2>&3)
+            fi
+            if [ $exitstatus = 0 ]; then
+                case "$OPTION" in
+                    a) ss="aliyun.com" ;;
+                    b) ss="ustc.edu.cn" ;;
+                    q) chSource ;;
+                esac
+                if (whiptail --title "Yes/No Box" --yesno "修改更新源为$ss?" 10 60) then
+                    if ! grep -q "$ss" /etc/apt/sources.list; then
+                        backup_files
+                        update_sources_list "$ss"
+                        update_pve_no_sub_list "ustc.edu.cn"
+                        show_success_message
+                        apt-get update
+                        apt-get -y install net-tools
+                        show_success_message
+                    else
+                        whiptail --title "Success" --msgbox "Already changed apt source to $ss! 已经更换apt源为 $ss" 10 60
+                    fi
+                fi
                 chSource
             fi
+            ;;
+        c | C)
+            if (whiptail --title "Yes/No Box" --yesno "禁用企业订阅更新源?" 10 60) then
+                if [ -f /etc/apt/sources.list.d/pve-no-sub.list ]; then
+                    echo "deb http://mirrors.ustc.edu.cn/proxmox/debian/pve/ $sver pve-no-subscription" > /etc/apt/sources.list.d/pve-no-sub.list
+                fi
+                if grep -q "^deb" /etc/apt/sources.list.d/pve-enterprise.list; then
+                    sed -i 's|deb|#deb|' /etc/apt/sources.list.d/pve-enterprise.list
+                fi
+                show_success_message
+                chSource
+            fi
+            ;;
+        d | D)
+            restore_backup_files
+            show_success_message
             chSource
-        else
-            chSource
-        fi
-        ;;
-    c | C  )
-    if (whiptail --title "Yes/No Box" --yesno "禁用企业订阅更新源?" 10 60) then
-        #sver=`cat /etc/apt/sources.list|awk 'NR==1{print $3}'`
-        if [ -f /etc/apt/sources.list.d/pve-no-sub.list ];then
-            #修改pve 5.x更新源地址为非订阅更新源，不使用企业订阅更新源
-            echo "deb http://mirrors.ustc.edu.cn/proxmox/debian/pve/ $sver pve-no-subscription" > /etc/apt/sources.list.d/pve-no-sub.list
-        else
-            whiptail --title "Success" --msgbox " apt source has been changed successfully!
-            软件源已更换成功！" 10 60
-        fi
-        if [ `grep "^deb" /etc/apt/sources.list.d/pve-enterprise.list|wc -l` != 0 ];then
-            #关闭pve 5.x企业订阅更新源
-            sed -i 's|deb|#deb|' /etc/apt/sources.list.d/pve-enterprise.list
-            whiptail --title "Success" --msgbox " apt source has been changed successfully!
-            软件源已更换成功！" 10 60
-        else
-            whiptail --title "Success" --msgbox " apt source has been changed successfully!
-            软件源已更换成功！" 10 60
-        fi
-        chSource
+            ;;
+        q)
+            echo "q"
+            ;;
+    esac
+fi
+}
+
+backup_files() {
+    cp /etc/apt/sources.list /etc/apt/sources.list.bak.pvetools
+    cp /etc/apt/sources.list.d/pve-no-sub.list /etc/apt/sources.list.d/pve-no-sub.list.bak.pvetools
+    cp /etc/apt/sources.list.d/pve-enterprise.list /etc/apt/sources.list.d/pve-enterprise.list.bak.pvetools
+    cp /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.bak.pvetools
+}
+
+update_sources_list() {
+    local mirror="$1"
+    if [ "$currentDebianVersion" -gt 11 ]; then
+        cat > /etc/apt/sources.list << EOF
+deb https://mirrors.$mirror/debian/ $sver main contrib non-free non-free-firmware
+#deb-src https://mirrors.$mirror/debian/ $sver main contrib non-free non-free-firmware
+deb https://mirrors.$mirror/debian/ $sver-updates main contrib non-free non-free-firmware
+#deb-src https://mirrors.$mirror/debian/ $sver-updates main contrib non-free non-free-firmware
+deb https://mirrors.$mirror/debian/ $sver-backports main contrib non-free non-free-firmware
+#deb-src https://mirrors.$mirror/debian/ $sver-backports main contrib non-free non-free-firmware
+$securitySource
+EOF
+    else
+        cat > /etc/apt/sources.list << EOF
+deb https://mirrors.$mirror/debian/ $sver main contrib non-free
+#deb-src https://mirrors.$mirror/debian/ $sver main contrib non-free
+deb https://mirrors.$mirror/debian/ $sver-updates main contrib non-free
+#deb-src https://mirrors.$mirror/debian/ $sver-updates main contrib non-free
+deb https://mirrors.$mirror/debian/ $sver-backports main contrib non-free
+#deb-src https://mirrors.$mirror/debian/ $sver-backports main contrib non-free
+$securitySource
+EOF
     fi
-    ;;
-d | D )
+}
+
+
+update_pve_no_sub_list() {
+    local mirror="$1"
+    echo "deb http://mirrors.$mirror/proxmox/debian/pve/ $sver pve-no-subscription" > /etc/apt/sources.list.d/pve-no-sub.list
+}
+
+disable_pve_enterprise_list() {
+    sed -i 's|deb|#deb|' /etc/apt/sources.list.d/pve-enterprise.list
+}
+
+update_ceph_list() {
+    local mirror="$1"
+    echo "deb http://mirrors.$mirror/proxmox/debian/ceph-luminous $sver main" > /etc/apt/sources.list.d/ceph.list
+}
+
+handle_debian_12() {
+    [ $currentDebianVersion -gt 11 ] && su -c 'echo "APT::Get::Update::SourceListWarnings::NonFreeFirmware \"false\";" > /etc/apt/apt.conf.d/no-bookworm-firmware.conf'
+}
+
+show_success_message() {
+    whiptail --title "Success" --msgbox "apt source has been changed successfully! 软件源已更换成功！" 10 60
+}
+
+restore_backup_files() {
     cp /etc/apt/sources.list.bak.pvetools /etc/apt/sources.list
     cp /etc/apt/sources.list.d/pve-no-sub.list.bak.pvetools /etc/apt/sources.list.d/pve-no-sub.list
     cp /etc/apt/sources.list.d/pve-enterprise.list.bak.pvetools /etc/apt/sources.list.d/pve-enterprise.list
-    #cp /etc/apt/sources.list.d/ceph.list.bak.pvetools /etc/apt/sources.list.d/ceph.list
-    whiptail --title "Success" --msgbox "apt source has been changed successfully!
-    软件源已更换成功！" 10 60
-    chSource
-    ;;
-q )
-    echo "q"
-    #main
-    ;;
-esac
-fi
+    cp /etc/apt/sources.list.d/ceph.list.bak.pvetools /etc/apt/sources.list.d/ceph.list
 }
 
 chMail(){

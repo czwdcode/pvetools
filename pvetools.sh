@@ -146,7 +146,7 @@ if [ $exitstatus = 0 ]; then
     case "$OPTION" in
         a | A)
             if (whiptail --title "Yes/No Box" --yesno "修改为ustc.edu.cn源，禁用企业订阅更新源，添加非订阅更新源(ustc.edu.cn),修改ceph镜像更新源" 10 60) then
-                if ! grep -q "ustc.edu.cn" /etc/apt/sources.list; then
+                if ! head -n 2 /etc/apt/sources.list | grep -q "ustc.edu.cn"; then
                     backup_files
                     update_sources_list "ustc.edu.cn"
                     update_pve_no_sub_list "ustc.edu.cn"
@@ -184,7 +184,7 @@ if [ $exitstatus = 0 ]; then
                     q) chSource ;;
                 esac
                 if (whiptail --title "Yes/No Box" --yesno "修改更新源为$ss?" 10 60) then
-                    if ! grep -q "$ss" /etc/apt/sources.list; then
+                    if ! head -n 2 /etc/apt/sources.list | grep -q "$ss"; then
                         backup_files
                         update_sources_list "$ss"
                         update_pve_no_sub_list "ustc.edu.cn"

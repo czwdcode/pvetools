@@ -108,12 +108,21 @@ if [ -z "$sver" ]; then
     return
 fi
 
-if [ $currentDebianVersion -gt 11 ]; then
-    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free non-free-firmware\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free non-free-firmware'
-elif [ $currentDebianVersion -gt 10 ]; then
-    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free'
+if [ "$currentDebianVersion" -gt 11 ]; then
+    securitySource="
+deb https://mirrors.ustc.edu.cn/debian-security/ ${sver}-security main contrib non-free non-free-firmware
+#deb-src https://mirrors.ustc.edu.cn/debian-security/ ${sver}-security main contrib non-free non-free-firmware
+"
+elif [ "$currentDebianVersion" -gt 10 ]; then
+    securitySource="
+deb https://mirrors.ustc.edu.cn/debian-security/ ${sver}-security main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian-security/ ${sver}-security main contrib non-free
+"
 else
-    securitySource=$'deb https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free\n#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free'
+    securitySource="
+deb https://mirrors.ustc.edu.cn/debian-security/ ${sver}/updates main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian-security/ ${sver}/updates main contrib non-free
+"
 fi
 
 if [ "$L" = "en" ]; then

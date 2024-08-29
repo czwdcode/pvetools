@@ -124,12 +124,12 @@ fi
 if [ $currentDebianVersion -gt 10 ];then
     securitySource="
 deb https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver-security main contrib non-free
 "
 else
     securitySource="
 deb https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian-security/ $sver/updates main contrib non-free
 "
 fi
     #"a" "Automation mode." \
@@ -162,11 +162,11 @@ a | A )
             cp /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.bak.pvetools
             cat > /etc/apt/sources.list <<EOF
 deb https://mirrors.ustc.edu.cn/debian/ $sver main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian/ $sver main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian/ $sver main contrib non-free
 deb https://mirrors.ustc.edu.cn/debian/ $sver-updates main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian/ $sver-updates main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian/ $sver-updates main contrib non-free
 deb https://mirrors.ustc.edu.cn/debian/ $sver-backports main contrib non-free
-deb-src https://mirrors.ustc.edu.cn/debian/ $sver-backports main contrib non-free
+#deb-src https://mirrors.ustc.edu.cn/debian/ $sver-backports main contrib non-free
 $securitySource
 EOF
             #修改pve 5.x更新源地址为非订阅更新源，不使用企业订阅更新源。
@@ -229,11 +229,11 @@ EOF
                     #sver=`cat /etc/apt/sources.list|awk 'NR==1{print $3}'`
                     cat > /etc/apt/sources.list << EOF
 deb https://mirrors.$ss/debian/ $sver main contrib non-free
-deb-src https://mirrors.$ss/debian/ $sver main contrib non-free
+#deb-src https://mirrors.$ss/debian/ $sver main contrib non-free
 deb https://mirrors.$ss/debian/ $sver-updates main contrib non-free
-deb-src https://mirrors.$ss/debian/ $sver-updates main contrib non-free
+#deb-src https://mirrors.$ss/debian/ $sver-updates main contrib non-free
 deb https://mirrors.$ss/debian/ $sver-backports main contrib non-free
-deb-src https://mirrors.$ss/debian/ $sver-backports main contrib non-free
+#deb-src https://mirrors.$ss/debian/ $sver-backports main contrib non-free
 $securitySource
 EOF
                     #修改 ceph镜像更新源
